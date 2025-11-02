@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/user/user.schema';
@@ -30,9 +34,12 @@ export class AuthService {
 
     const payload = {
       sub: user._id,
-      email: user.email,
-      name: user.name,
-      avatar: user.avatar,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
     };
 
     const token = await this.generateToken(payload);
@@ -60,9 +67,12 @@ export class AuthService {
 
     const payload = {
       sub: userExist._id,
-      email: userExist.email,
-      name: userExist.name,
-      avatar: userExist.avatar,
+      user: {
+        id: userExist.id,
+        email: userExist.email,
+        name: userExist.name,
+        avatar: userExist.avatar,
+      },
     };
 
     const token = await this.generateToken(payload);
@@ -82,5 +92,13 @@ export class AuthService {
 
   async generateToken(payload: any) {
     return await this.jwtService.signAsync(payload);
+  }
+
+  async verifyToken(token: string) {
+    try {
+      return await this.jwtService.verifyAsync(token);
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 }
