@@ -13,7 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
   ) {}
   async register(registerDto: RegisterDto) {
     const userExist = await this.userModel.findOne({
