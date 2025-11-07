@@ -1,6 +1,7 @@
-import { Logger, UseFilters } from '@nestjs/common';
+import { Logger, UnauthorizedException, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
@@ -13,11 +14,10 @@ import { WsExceptionFilter } from './exception-filter/ws-exception-filter';
 import { WsAuthMiddleware } from './middlewares/ws-auth-middleware';
 import { JwtService } from '@nestjs/jwt';
 
-@WebSocketGateway(5000, {
+@WebSocketGateway({
   cors: {
     origin: '*',
   },
-  namespace: 'messages',
 })
 @UseFilters(new WsExceptionFilter())
 export class EventGateWay
@@ -51,5 +51,19 @@ export class EventGateWay
   @SubscribeMessage('hello')
   welcomeClient(@ConnectedSocket() client: Socket) {
     return `Hello client with id: ${client.id} `;
+  }
+
+  @SubscribeMessage('edit-user')
+  async editCurrentUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('token') token: string,
+  ) {
+    try {
+      const decoded = await this.jwtService.verifyAsync(token);
+      client.data.user = decoded.user;
+      return 'Success edit user';
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 }

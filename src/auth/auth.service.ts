@@ -6,7 +6,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/user/user.schema';
-import { LoginDto, RegisterDto } from './dto';
+import { EditUserDto, LoginDto, RegisterDto } from './dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 @Injectable()
@@ -97,6 +97,35 @@ export class AuthService {
   async verifyToken(token: string) {
     try {
       return await this.jwtService.verifyAsync(token);
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
+  }
+
+  async editUser(id: string, { name }: EditUserDto) {
+    try {
+      const user = await this.userModel.findById(id);
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      user.name = name;
+
+      await user.save();
+
+      const payload = {
+        sub: user._id,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+        },
+      };
+      const token = await this.generateToken(payload);
+      return {
+        token,
+      };
     } catch (error) {
       throw new UnauthorizedException();
     }

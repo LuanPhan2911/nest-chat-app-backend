@@ -20,3 +20,7 @@ export class LoginDto {
   @MinLength(6)
   password: string;
 }
+export class EditUserDto {
+  @IsNotEmpty()
+  name: string;
+}
